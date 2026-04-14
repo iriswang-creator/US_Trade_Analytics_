@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 
 # ─── 頁面基本設定（一定要放在最前面）───
@@ -14,6 +15,47 @@ from sidebar import render_sidebar
 from view import render_view
 from view_agent import render_tab6_ai_analyst
 from view_multi_agent import render_tab7_multi_agent
+
+# ─── 儀錶板側邊欄開啟按鈕 ───
+
+def render_sidebar_toggle_button():
+    components.html(
+        """
+        <div style='margin-bottom: 1rem;'>
+          <button id='open-sidebar-btn' style='
+            background: #5b8dee;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.1rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+          '>開啟側邊欄</button>
+        </div>
+        <script>
+          const button = document.getElementById('open-sidebar-btn');
+          button.addEventListener('click', () => {
+            const selectors = [
+              'button[aria-label*="sidebar"]',
+              'button[title*="sidebar"]',
+              'button[aria-label*="Sidebar"]',
+              'button[title*="Sidebar"]',
+            ];
+            const sidebarButton = selectors
+              .map(s => document.querySelector(s))
+              .find(el => el !== null);
+            if (sidebarButton) {
+              sidebarButton.click();
+            } else {
+              alert('請把滑鼠移到頁面左側邊緣，然後點擊箭頭開啟側邊欄。');
+            }
+          });
+        </script>
+        """,
+        height=90,
+        scrolling=False,
+    )
 
 # ─── 先取得 sidebar 設定（含 theme）───
 filters = render_sidebar()
@@ -194,10 +236,6 @@ section[data-testid="stSidebar"] hr {
     transition: border-color 0.15s ease, background 0.15s ease !important;
     box-shadow: none !important;
 }
-
-/* ── 隱藏 sidebar 收合按鈕 ── */
-[data-testid="collapsedControl"] { display: none !important; }
-button[kind="header"] { display: none !important; }
 
 /* ══ DIVIDER ══ */
 hr { margin: 1rem 0 !important; }
@@ -525,6 +563,8 @@ else:
     """, unsafe_allow_html=True)
 
 st.divider()
+
+render_sidebar_toggle_button()
 
 # ─── 六個主要 Tab ───
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
