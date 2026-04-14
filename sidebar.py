@@ -123,7 +123,7 @@ def render_sidebar():
     st.sidebar.markdown("""
 <hr style='border-color: rgba(255,255,255,0.07); margin: 1.4rem 0 0.8rem;'>
 <div style='font-size: 0.7rem; color: #3f3f46;'>
-    <a href='https://www.census.gov/programs-surveys/international-trade.html' target='_blank' rel='noreferrer' style='color: #3f3f46; text-decoration: none;'>
+    <a href='https://www.census.gov/foreign-trade/' target='_blank' rel='noreferrer' style='color: #3f3f46; text-decoration: none;'>
         U.S. Census Bureau Foreign Trade Division
     </a>
 </div>
