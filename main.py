@@ -21,18 +21,27 @@ from view_multi_agent import render_tab7_multi_agent
 def render_sidebar_toggle_button():
     components.html(
         """
-        <div style='margin-bottom: 1rem;'>
-          <button id='open-sidebar-btn' style='
+        <style>
+          #open-sidebar-btn {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 9999;
             background: #5b8dee;
             color: white;
             border: none;
-            border-radius: 8px;
-            padding: 0.75rem 1.1rem;
+            border-radius: 999px;
+            padding: 0.8rem 1.2rem;
             font-size: 0.95rem;
             font-weight: 700;
             cursor: pointer;
-          '>開啟側邊欄</button>
-        </div>
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16);
+          }
+          #open-sidebar-btn:hover {
+            background: #4778d0;
+          }
+        </style>
+        <button id='open-sidebar-btn'>開啟側邊欄</button>
         <script>
           const button = document.getElementById('open-sidebar-btn');
           button.addEventListener('click', () => {
@@ -53,7 +62,7 @@ def render_sidebar_toggle_button():
           });
         </script>
         """,
-        height=90,
+        height=120,
         scrolling=False,
     )
 
