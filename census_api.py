@@ -43,11 +43,24 @@ def _fetch_json(url: str) -> list:
     }
     resp = _SESSION.get(url, headers=headers, timeout=_TIMEOUT)
     resp.raise_for_status()
-    return resp.json()
+    content_type = resp.headers.get("Content-Type", "")
+    if "json" not in content_type.lower():
+        raise RuntimeError(
+            f"Census API returned unexpected content type {content_type} for {url}."
+        )
+    try:
+        return resp.json()
+    except ValueError as exc:
+        raise RuntimeError(
+            f"Census API returned invalid JSON for {url}: {exc}. "
+            f"Response preview: {resp.text[:200]!r}"
+        ) from exc
 
 
 def _json_to_df(data: list, value_col: str, raw_value_col: str) -> pd.DataFrame:
     """Convert Census API JSON (header row + data rows) to a tidy DataFrame."""
+    if not isinstance(data, list) or len(data) < 2:
+        raise RuntimeError("Census API returned unexpected JSON structure.")
     headers = data[0]
     rows = data[1:]
     df = pd.DataFrame(rows, columns=headers)
@@ -95,17 +108,26 @@ def fetch_live_data(year_start: int, year_end: int) -> pd.DataFrame:
     Returns a combined DataFrame with the same structure as country.xlsx.
     """
     frames = []
+    errors = []
     for year in range(year_start, year_end + 1):
         try:
             frames.append(fetch_country_trade(year))
-        except Exception:
-            # Skip years where the API returns an error (e.g. data not yet published)
+        except Exception as exc:
+            errors.append((year, str(exc)))
             continue
 
     if not frames:
+        error_summary = "; ".join(f"{year}: {msg}" for year, msg in errors[:3])
         raise RuntimeError(
             f"Census API returned no data for {year_start}–{year_end}. "
+            f"First errors: {error_summary}. "
             "Check your internet connection or try again later."
+        )
+
+    if errors:
+        st.warning(
+            "Some years failed to load from Census API: "
+            + "; ".join(f"{year}: {msg}" for year, msg in errors[:5])
         )
 
     return pd.concat(frames, ignore_index=True)
