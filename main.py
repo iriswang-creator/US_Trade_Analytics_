@@ -16,56 +16,6 @@ from view import render_view
 from view_agent import render_tab6_ai_analyst
 from view_multi_agent import render_tab7_multi_agent
 
-# ─── 儀錶板側邊欄開啟按鈕 ───
-
-def render_sidebar_toggle_button():
-    components.html(
-        """
-        <style>
-          #open-sidebar-btn {
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 9999;
-            background: #5b8dee;
-            color: white;
-            border: none;
-            border-radius: 999px;
-            padding: 0.8rem 1.2rem;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16);
-          }
-          #open-sidebar-btn:hover {
-            background: #4778d0;
-          }
-        </style>
-        <button id='open-sidebar-btn'>開啟側邊欄</button>
-        <script>
-          const button = document.getElementById('open-sidebar-btn');
-          button.addEventListener('click', () => {
-            const selectors = [
-              'button[aria-label*="sidebar"]',
-              'button[title*="sidebar"]',
-              'button[aria-label*="Sidebar"]',
-              'button[title*="Sidebar"]',
-            ];
-            const sidebarButton = selectors
-              .map(s => document.querySelector(s))
-              .find(el => el !== null);
-            if (sidebarButton) {
-              sidebarButton.click();
-            } else {
-              alert('請把滑鼠移到頁面左側邊緣，然後點擊箭頭開啟側邊欄。');
-            }
-          });
-        </script>
-        """,
-        height=120,
-        scrolling=False,
-    )
-
 # ─── 先取得 sidebar 設定（含 theme）───
 filters = render_sidebar()
 _light = filters["theme"] == "Light"
@@ -572,8 +522,6 @@ else:
     """, unsafe_allow_html=True)
 
 st.divider()
-
-render_sidebar_toggle_button()
 
 # ─── 六個主要 Tab ───
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
