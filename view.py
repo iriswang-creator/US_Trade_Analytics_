@@ -18,12 +18,15 @@ TRADE_EVENTS = {
 @st.cache_data(ttl=3600)
 def load_country_data(data_source: str = "local"):
     """Load country trade data from local Excel or live Census Bureau API."""
+    status = "local"
     if data_source == "live":
         try:
             from census_api import fetch_live_data
             with st.spinner("Fetching live data from Census Bureau API…"):
                 df = fetch_live_data(2013, 2024)
+            status = "live_success"
         except Exception as e:
+            status = f"live_failure: {e}"
             st.warning(
                 f"Live API unavailable ({e}). "
                 "Falling back to local data automatically."
@@ -35,8 +38,8 @@ def load_country_data(data_source: str = "local"):
         df = pd.read_excel("data/country.xlsx")
         df = df[df["CTY_CODE"] > 1000].copy()
         df["BALANCE"] = df["EYR"] - df["IYR"]
-    df["CTYNAME"] = df["CTYNAME"].astype(str)
-    return df
+    df["CTYNAME"] = df["CTYNAME"].astype(str).str.title()
+    return df, status
 
 @st.cache_data
 def load_enduse_data():
@@ -74,8 +77,15 @@ def load_enduse_data():
 
 def render_view(tab1, tab2, tab3, tab4, tab5, filters):
     data_source = "live" if "Live" in filters.get("data_source", "") else "local"
-    df_country = load_country_data(data_source)
+    df_country, api_status = load_country_data(data_source)
     exp_long, imp_long = load_enduse_data()
+
+    if data_source == "live":
+        if api_status == "live_success":
+            st.sidebar.success("Live API loaded successfully.")
+        else:
+            st.sidebar.error("Live API failed. Using local data fallback.")
+            st.sidebar.caption(api_status)
 
     render_tab1_world_map(tab1, df_country, filters)
     render_tab2_bilateral(tab2, df_country, filters)
@@ -442,10 +452,34 @@ def render_tab4_trade_balance(tab, df, filters):
         # ── 趨勢圖：選定幾個主要國家看差額走勢 ──
         st.markdown("**Trade Balance Trend — Selected Major Partners**")
         major = ["China", "Canada", "Mexico", "Germany", "Japan"]
-        df_major = df[df["CTYNAME"].isin(major) & df["year"].between(yr_start, yr_end)].copy()
+        major_lower = [c.lower() for c in major]
+        df_major = df[
+            df["CTYNAME"].str.lower().isin(major_lower) &
+            df["year"].between(yr_start, yr_end)
+        ].copy()
         df_major["BALANCE"] = df_major["BALANCE"] / unit_divisor
+
+        if df_major.empty:
+            top_countries = (
+                df[df["year"].between(yr_start, yr_end)]
+                .groupby("CTYNAME")["BALANCE"]
+                .sum()
+                .abs()
+                .nlargest(5)
+                .index.tolist()
+            )
+            df_major = df[
+                df["CTYNAME"].isin(top_countries) &
+                df["year"].between(yr_start, yr_end)
+            ].copy()
+            df_major["BALANCE"] = df_major["BALANCE"] / unit_divisor
+            st.info(
+                "Live preset major partners were not available, showing the top 5 active partners instead: "
+                + ", ".join(top_countries)
+            )
+
         fig_trend = px.line(
-            df_major, x="year", y="BALANCE", color="CTYNAME",
+            df_major, x="year", y="BALANCE", color="CTYNAME", markers=True,
             labels={"BALANCE": f"Trade Balance ({unit_label})", "year": "Year", "CTYNAME": "Country"},
             height=360,
         )
