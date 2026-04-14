@@ -88,13 +88,22 @@ def render_sidebar():
 
     # ── Year Range ──
     st.sidebar.markdown('<span class="sb-label">Year Range</span>', unsafe_allow_html=True)
+    year_min = 2013 if data_source == "Live API (2013–present)" else 1985
+    year_start = st.session_state.get("year_range", (year_min, 2024))[0]
+    year_end = st.session_state.get("year_range", (year_min, 2024))[1]
+    if year_start < year_min:
+        year_start = year_min
+    if year_end < year_min:
+        year_end = year_min
     year_range = st.sidebar.slider(
         "Select years",
-        min_value=1985,
+        min_value=year_min,
         max_value=2025,
-        value=(2010, 2024),
+        value=(year_start, year_end),
         label_visibility="collapsed",
     )
+    if data_source == "Live API (2013–present)":
+        st.sidebar.info("Live data only available from 2013 onward. Earlier years are not available in live mode.")
     st.sidebar.caption(f"{year_range[0]} – {year_range[1]}  ·  Tabs 2, 3, 4")
 
     st.sidebar.markdown("<div style='margin-bottom:1rem'></div>", unsafe_allow_html=True)
